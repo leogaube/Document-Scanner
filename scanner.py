@@ -8,13 +8,13 @@ import os
 def find_document_corners(img):
     # 1. Preprocessing
     # blur the image to reduce noise
-    blurred = cv.GaussianBlur(img, ksize=(5, 5), sigmaX=0)
+    blurred_img = cv.GaussianBlur(img, ksize=(5, 5), sigmaX=0)
 
     # ToDo: more preprocessing
 
     # 2. Find all contours
     print("Edge Detection")
-    edge_img = cv.Canny(blurred, 75, 200)
+    edge_img = cv.Canny(blurred_img, 75, 200)
 
     print("Contour Detection")
     # use cv.CHAIN_APPROX_SIMPLE --> best case only 4 points needed for perfect rectangular document
@@ -56,7 +56,20 @@ def find_document_corners(img):
 
 
 def perspective_transform(img, doc_corners):
-    pass
+    # ToDo: take rotation into account
+    # ToDo: bug top-down image is fliped vertically?! (point order is mixed up?)
+
+    src = np.array([doc_corners[0][0], doc_corners[1][0], doc_corners[2][0], doc_corners[3][0]], dtype="float32")
+    print(src)
+    dst = np.array([[0, 0], [419, 0], [419, 593], [0, 593]], dtype="float32")
+    M = cv.getPerspectiveTransform(src, dst)
+    top_down_img = cv.warpPerspective(img, M, (420, 594))
+
+    if DEBUG:
+        cv.imshow("Top-Down Document", top_down_img)
+
+        cv.waitKey(0)
+        cv.destroyAllWindows()
 
 
 # Adaptive Thresholding?!
