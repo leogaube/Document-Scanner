@@ -21,6 +21,8 @@ def find_document_corners(img):
     # ToDo: understand retrieval-mode: cv.RETR_EXTERNAL vs RETR_TREE vs RETR_LIST?!
     contours, _hierarchy = cv.findContours(edge_img, mode=cv.RETR_TREE, method=cv.CHAIN_APPROX_SIMPLE)
 
+    # BUG: if contour consists of many points the area seems to be unreasonably big --> wrong contour selected
+    # ToDo: document contour may consist of more than 4 points --> non-maximum supression?
     # 3. Find largest contour
     largest_contour = None
     largest_area = -1
@@ -56,14 +58,18 @@ def find_document_corners(img):
 
 
 def perspective_transform(img, doc_corners):
+    print("Persective Transformation")
     # ToDo: take rotation into account
-    # ToDo: bug top-down image is fliped vertically?! (point order is mixed up?)
+
+    # Final Image dimensions (keep aspect ratio of DIN A4)!
+    WIDTH = 210 * 2
+    HEIGHT = 297 * 2
 
     src = np.array([doc_corners[1][0], doc_corners[2][0], doc_corners[0][0], doc_corners[3][0]], dtype="float32")
-    print(src)
-    dst = np.array([[0, 0], [0, 593], [419, 0], [419, 593]], dtype="float32")
+    # print(src)
+    dst = np.array([[0, 0], [0, HEIGHT - 1], [WIDTH - 1, 0], [WIDTH - 1, HEIGHT - 1]], dtype="float32")
     M = cv.getPerspectiveTransform(src, dst)
-    top_down_img = cv.warpPerspective(img, M, (420, 594))
+    top_down_img = cv.warpPerspective(img, M, (WIDTH, HEIGHT))
 
     if DEBUG:
         cv.imshow("Top-Down Document", top_down_img)
@@ -71,10 +77,19 @@ def perspective_transform(img, doc_corners):
         cv.waitKey(0)
         cv.destroyAllWindows()
 
+    return top_down_img
 
-# Adaptive Thresholding?!
+
 def filter_binary(img):
-    pass
+    print("Adaptive Thresholding")
+    # Adaptive Thresholding
+    gray_img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+    binary_img = cv.adaptiveThreshold(gray_img, 255, cv.ADAPTIVE_THRESH_MEAN_C, cv.THRESH_BINARY_INV, 21, 10)
+
+    cv.imshow("Final Document", binary_img)
+
+    cv.waitKey(0)
+    cv.destroyAllWindows()
 
 
 def scan(img, save=False):
@@ -94,8 +109,17 @@ def scan(img, save=False):
 if __name__ == "__main__":
     DEBUG = True
 
-    filename = os.path.join(".", "imgs", "checkerboard.jpg")
-    test_img = cv.imread(filename)
-    test_img = imutils.resize(test_img, width=360)
+    test_folder = os.path.join(".", "imgs", "rotation")
+    for image_name in os.listdir(test_folder):
+        filename = os.path.join(test_folder, image_name)
+        if not os.path.isfile(filename):
+            continue
+        test_img = cv.imread(filename)
+        (h, w) = test_img.shape[:2]
+        if w < h:
+            test_img = imutils.resize(test_img, width=360)
+        else:
+            test_img = imutils.resize(test_img, height=360)
 
-    scan(test_img)
+        print(f"scanning document: {filename}")
+        scan(test_img)
