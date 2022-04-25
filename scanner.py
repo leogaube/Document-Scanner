@@ -59,9 +59,9 @@ def perspective_transform(img, doc_corners):
     # ToDo: take rotation into account
     # ToDo: bug top-down image is fliped vertically?! (point order is mixed up?)
 
-    src = np.array([doc_corners[0][0], doc_corners[1][0], doc_corners[2][0], doc_corners[3][0]], dtype="float32")
+    src = np.array([doc_corners[1][0], doc_corners[2][0], doc_corners[0][0], doc_corners[3][0]], dtype="float32")
     print(src)
-    dst = np.array([[0, 0], [419, 0], [419, 593], [0, 593]], dtype="float32")
+    dst = np.array([[0, 0], [0, 593], [419, 0], [419, 593]], dtype="float32")
     M = cv.getPerspectiveTransform(src, dst)
     top_down_img = cv.warpPerspective(img, M, (420, 594))
 
