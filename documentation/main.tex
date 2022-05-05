@@ -27,24 +27,49 @@
 	    
 	    
 
-    \section{}
+    \section{Algorithm Overview}
 	Our algorithm for scanning a document in an image consists of three main parts, each with its own challenges.
 	
 	First, we will have to localize the document in the image. 
 	Then we will use a perspective transform from the corner points of the document to the entire span of the image in order to obtain a top-down view without any distortions.
-	Finally, we will use a binary filter to distinguish text from background.
-		\subsection{Document Localization}
-		Some smartphone scanner apps require the user to mark the four corner points of the document manually. 
-		However, we want to automate this process by detecting the corner points using Computer Vision.
+	Finally, we will use a binary filter to distinguish text from background and save the resulting image as our scanned document.
 
-		Detecting the corner points accurately and consistantly is probably hardest and most crutial step of the entire algorithm.
+	\section{Challenges}
+	It is fairly straight forward if we work with an image like in Figure 1a.
+	However, we also want our algorithm to work under bad lighting conditions [Fig. 1b], taken from an extreme angle [Fig. 1c], with a document on a low contrast background [Fig. 1d].
+	Of course the final image will suffer in quality compared to a document taken under near-optimal conditions, but our goal is to still obtain a readable document.
+	
+	\section{Document Localization}
+	Some smartphone scanner apps require the user to mark the four corner points of the document manually. 
+	However, we want to automate this process by detecting the corner points using Computer Vision.
+	Detecting the corner points accurately and consistantly is probably hardest and most crutial step of the entire algorithm. 
+	
+		\subsection{Preprocessing}
+		Before we do Edge Detection, it is advisable to smooth the image in order to get rid of noise. Otherwise this noise may result in detection of edges which may negatively influence the algorithms performance.
+		--> Gaussian Blur
+		\subsection{Edge Detection}
+		--> Canny Edge Detection (Sobel instead?)
+	
+		\subsection{Contours}
+		ToDo: Explain contours
+
+		We can assume that in our edge image there is a contour that matches the outline of our document. 
+		It is ok, if we miss the exact location of the document corners by a couple of pixels, but detecting the wrong contour will make the resulting document unreadable.
+
+		Detecting contours is easy with OpenCV using the cv2.findContours(...) method.
+		However, we have to distinguish the one corresponding to our document from all the other contours in the image.
+		Other contours may include text, graphs and pictures on the document itself or even objects e.g. a stapler on the desk. 
+		The contour we are looking for is one of the largest by area and we should be able to approximate it with only four points.
+		Both of these assumptions will help us to find the right one, as it is highly unprobable another contour meets both criteria. 
+		We will just pick the largest contour that can be approximated using four points as show by the following pseudo code:
 		
-		\subsection{Perspective Transformation}
-		top-down view
-		\subsection{Post-Processing}
-		binary image
+	\section{Perspective Transformation}
+	top-down view
+	
+	\section{Post-Processing}
+	binary image
 
-		simple thresholding vs adaptive Thresholding
+	simple thresholding vs adaptive Thresholding
 			
 \section*{List of Acronyms} 
 \addcontentsline{toc}{section}{List of Acronyms}
