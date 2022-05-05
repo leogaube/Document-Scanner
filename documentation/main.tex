@@ -5,7 +5,7 @@
 \usepackage{lipsum,caption}
 \usepackage{acronym} 
 
-\title{report: document scanner}
+\title{Document Scanner}
 \author{Leopold Gaube and Florian Betz}
 \date{\today}
 
@@ -26,29 +26,25 @@
 	    You can use OpenCV with the programming languages C, C++, Python or Java.
 	    
 	    
-	    
 
     \section{}
-		\subsection{Erster Unterabschnitt}
+	Our algorithm for scanning a document in an image consists of three main parts, each with its own challenges.
+	
+	First, we will have to localize the document in the image. 
+	Then we will use a perspective transform from the corner points of the document to the entire span of the image in order to obtain a top-down view without any distortions.
+	Finally, we will use a binary filter to distinguish text from background.
+		\subsection{Document Localization}
+		Some smartphone scanner apps require the user to mark the four corner points of the document manually. 
+		However, we want to automate this process by detecting the corner points using Computer Vision.
 
-			Das RWU-Logo kann einfach über das Kommando
-			\verb?\rwulogo? eingebunden werden und ist in
-			Abbildung~\ref{fig:logo} zu sehen.
+		Detecting the corner points accurately and consistantly is probably hardest and most crutial step of the entire algorithm.
+		
+		\subsection{Perspective Transformation}
+		top-down view
+		\subsection{Post-Processing}
+		binary image
 
-			\begin{figure}[hb]
-				\centering
-				\rwulogo[width=0.5\columnwidth]
-				\caption{Das RWU-Logo}
-				\label{fig:logo}
-			\end{figure}
-
-		\subsection{Zweiter Unterabschnitt}
-
-			\lipsum[1]
-
-			\subsubsection{Unterunterabschnitt}
-
-			\lipsum[2-5]
+		simple thresholding vs adaptive Thresholding
 			
 \section*{List of Acronyms} 
 \addcontentsline{toc}{section}{List of Acronyms}
