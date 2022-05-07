@@ -3,32 +3,35 @@ import imutils
 import numpy as np
 
 import os
-import sys
 
 
 def find_document_corners(img):
     # 1. Preprocessing
     # Size limit
     (h, w) = img.shape[:2]
+
     scale = 1.0
-    if h > 300 or w > 300:
+    if h > 400 or w > 400:
+
         if h > w:
-            scale *= h / 300.0
-            img = imutils.resize(img, height=300)
+            scale *= h / 400.0
+            img = imutils.resize(img, height=400)
         else:
-            scale *= w / 300.0
-            img = imutils.resize(img, width=300)
+            scale *= w / 400.0
+            img = imutils.resize(img, width=400)
 
     # blur the image to reduce noise
     blurred_img = cv.GaussianBlur(img, ksize=(3, 3), sigmaX=0)
 
     # 2. Find all contours
     # print("Edge Detection")
-    edge_img = cv.Canny(blurred_img, 150, 200)
+    edge_img = cv.Canny(blurred_img, 110, 210)
 
     # print("Contour Detection")
-    # use cv.CHAIN_APPROX_SIMPLE --> best case only 4 points needed for perfect rectangular document
-    # ToDo: understand retrieval-mode: cv.RETR_EXTERNAL vs RETR_TREE vs RETR_LIST?!
+    # use cv.CHAIN_APPROX_SIMPLE --> best case on
+    # ly 4 points needed for perfect rectangular document
+    # ToDo: understand retrieval-mode: cv.RETR_EXTERNAL vs RET
+    # R_TREE vs RETR_LIST?!
     contours, _hierarchy = cv.findContours(edge_img, mode=cv.RETR_EXTERNAL, method=cv.CHAIN_APPROX_SIMPLE)
 
     contour_img = img.copy()
@@ -41,7 +44,9 @@ def find_document_corners(img):
         low_poly_contour = cv.approxPolyDP(contour, 0.03 * perimeter, closed=True)
 
         if len(low_poly_contour) == 4:
-            area = cv.contourArea(contour)
+            # approximate area with a roated rectangle
+            ((_cx, _cy), (w, h), _angle) = cv.minAreaRect(contour)
+            area = w * h
             if area > largest_area:
                 largest_area = area
                 largest_contour = low_poly_contour
@@ -99,9 +104,6 @@ def perspective_transform(img, doc_corners):
 
     sorted_corners = sort_corners(doc_corners)
 
-    # print(doc_corners)
-    print(sorted_corners)
-
     src = np.array(sorted_corners, dtype="float32")
     dst = np.array([[0, 0], [0, HEIGHT], [WIDTH, 0], [WIDTH, HEIGHT]], dtype="float32")
     M = cv.getPerspectiveTransform(src, dst)
@@ -133,7 +135,7 @@ if __name__ == "__main__":
     DEBUG = True
     SAVE = True
 
-    test_folder = os.path.join(".", "imgs", "test")
+    test_folder = os.path.join(".", "imgs", "test2")
     for image_name in os.listdir(test_folder):
         filename = os.path.join(test_folder, image_name)
         if not os.path.isfile(filename):
