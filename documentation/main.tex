@@ -66,10 +66,19 @@
 	\section{Perspective Transformation}
 	top-down view
 	
-	\section{Post-Processing}
-	binary image
+	\section{Thresholding}
+		\subsection{Simple Thresholding}
+		For the last step of our project we convert the scanned document into a binary image, thus each pixel is supposed to be either black for text and graphs or white for the background.
+		The easiest way to achieve this is by converting the color image into grayscale and setting a threshold value. 
+		Any pixel value below this threshold would become black, pixel values above would be set to white.
 
-	simple thresholding vs adaptive Thresholding
+		\subsection{Adaptive Thresholding}
+		However, there is a problem with this simple thresholding approach, as it performs poorly under bad lighting conditions as can be seen in [Fig. 3a].
+		When taking pictures of documents, a user may cast a shadow with their camera or mobile phone onto the document. 
+		This can be problematic if a region in the shadows has lower pixel values for the background than the text in a well-lit region.
+		In such a scenario, it would be impossible to find a static threshold that works well for the entire document.
+		So instead we need an adaptive approach that looks at a set of neighboring pixels and chooses a threshold for this local region dynamically.
+
 			
 \section*{List of Acronyms} 
 \addcontentsline{toc}{section}{List of Acronyms}
