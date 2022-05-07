@@ -74,16 +74,36 @@ def find_document_corners(img):
     return doc_corners
 
 
+def sort_corners(corners):
+    x_values_sorted = np.argsort(corners[:, 0, 0])
+    y_values_sorted = np.argsort(corners[:, 0, 1])
+
+    sorted_corners = []
+    for index in y_values_sorted:
+        if index == x_values_sorted[0] or index == x_values_sorted[1]:
+            sorted_corners.append(corners[index])
+
+    for index in y_values_sorted:
+        if index == x_values_sorted[2] or index == x_values_sorted[3]:
+            sorted_corners.append(corners[index])
+
+    return sorted_corners
+
+
 def perspective_transform(img, doc_corners):
     # print("Persective Transformation")
-    # ToDo: take rotation into account
 
     # Final Image dimensions (keep aspect ratio of DIN A4)!
     WIDTH = 210 * 5
     HEIGHT = 297 * 5
 
-    src = np.array([doc_corners[1][0], doc_corners[2][0], doc_corners[0][0], doc_corners[3][0]], dtype="float32")
-    dst = np.array([[0, 0], [0, HEIGHT - 1], [WIDTH - 1, 0], [WIDTH - 1, HEIGHT - 1]], dtype="float32")
+    sorted_corners = sort_corners(doc_corners)
+
+    # print(doc_corners)
+    print(sorted_corners)
+
+    src = np.array(sorted_corners, dtype="float32")
+    dst = np.array([[0, 0], [0, HEIGHT], [WIDTH, 0], [WIDTH, HEIGHT]], dtype="float32")
     M = cv.getPerspectiveTransform(src, dst)
     top_down_img = cv.warpPerspective(img, M, (WIDTH, HEIGHT))
 
