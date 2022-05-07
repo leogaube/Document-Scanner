@@ -11,20 +11,20 @@ def find_document_corners(img):
     # Size limit
     (h, w) = img.shape[:2]
     scale = 1.0
-    if h > 1000 or w > 1000:
+    if h > 300 or w > 300:
         if h > w:
-            scale *= h / 1000.0
-            img = imutils.resize(img, height=1000)
+            scale *= h / 300.0
+            img = imutils.resize(img, height=300)
         else:
-            scale *= w / 1000.0
-            img = imutils.resize(img, width=1000)
+            scale *= w / 300.0
+            img = imutils.resize(img, width=300)
 
     # blur the image to reduce noise
-    blurred_img = cv.GaussianBlur(img, ksize=(5, 5), sigmaX=0)
+    blurred_img = cv.GaussianBlur(img, ksize=(3, 3), sigmaX=0)
 
     # 2. Find all contours
     # print("Edge Detection")
-    edge_img = cv.Canny(blurred_img, 160, 210)
+    edge_img = cv.Canny(blurred_img, 150, 200)
 
     # print("Contour Detection")
     # use cv.CHAIN_APPROX_SIMPLE --> best case only 4 points needed for perfect rectangular document
@@ -38,18 +38,13 @@ def find_document_corners(img):
     largest_area = -1
     for contour in contours:
         perimeter = cv.arcLength(contour, closed=True)
-        low_poly_contour = cv.approxPolyDP(contour, 0.02 * perimeter, closed=True)
+        low_poly_contour = cv.approxPolyDP(contour, 0.03 * perimeter, closed=True)
 
         if len(low_poly_contour) == 4:
-            (x, y, w, h) = cv.boundingRect(contour)
-            # cv.rectangle(contour_img, (x, y), (x + w, y + h), (255, 0, 0), 2)
-            area = w * h
-            if area > largest_area and area > 10000:
+            area = cv.contourArea(contour)
+            if area > largest_area:
                 largest_area = area
                 largest_contour = low_poly_contour
-
-    if largest_contour is None:
-        return None
 
     # 4. extract four corner points of largest contour
     # (assuming largest contour is our document --> if it fails: Hough Transform?)
@@ -69,6 +64,9 @@ def find_document_corners(img):
 
         cv.waitKey(0)
         cv.destroyAllWindows()
+
+    if largest_contour is None:
+        return None
 
     doc_corners = largest_contour * scale
     assert len(doc_corners) == 4
@@ -112,7 +110,7 @@ def filter_binary(img):
 
 
 if __name__ == "__main__":
-    DEBUG = False
+    DEBUG = True
     SAVE = True
 
     test_folder = os.path.join(".", "imgs", "test")
