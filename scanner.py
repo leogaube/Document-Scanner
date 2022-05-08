@@ -135,7 +135,7 @@ if __name__ == "__main__":
     DEBUG = True
     SAVE = True
 
-    test_folder = os.path.join(".", "imgs", "test2")
+    test_folder = os.path.join(".", "imgs", "test1")  # "test1", "test2", "not working"
     for image_name in os.listdir(test_folder):
         filename = os.path.join(test_folder, image_name)
         if not os.path.isfile(filename):
