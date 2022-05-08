@@ -30,9 +30,9 @@
     \section{Algorithm Overview}
 	Our algorithm for scanning a document in an image consists of three main parts, each with its own challenges.
 	
-	First, we will have to localize the document in the image. 
-	Then we will use a perspective transform from the corner points of the document to the entire span of the image in order to obtain a top-down view without any distortions.
-	Finally, we will use a binary filter to distinguish text from background and save the resulting image as our scanned document.
+	First, we have to localize the document in the image. 
+	Then we use a perspective transform from the corner points of the document to the entire span of the image in order to obtain a top-down view without perspective distortions.
+	Finally, we use a binary filter to distinguish text from background and save the resulting image as our scanned document.
 
 	\section{Challenges}
 	It is fairly straight forward if we work with an image like in Figure 1a.
@@ -64,6 +64,7 @@
 		We will just pick the largest contour that can be approximated using four points as show by the following pseudo code:
 		
 	\section{Perspective Transformation}
+	sort points --> pseudo code
 	top-down view
 	
 	\section{Thresholding}
@@ -79,7 +80,31 @@
 		In such a scenario, it would be impossible to find a static threshold that works well for the entire document.
 		So instead we need an adaptive approach that looks at a set of neighboring pixels and chooses a threshold for this local region dynamically.
 
-			
+	\section{known problems and possible solutions}
+	Our algorithm works quite well and consistently even under difficult lighting conditions or when the picture of the document was taken from an unusual angle.
+	However, we also observed some use cases where it fails:
+	
+	If the document is placed on a low-contrast background (e.g. a white desk), our algorithm has problems detecting an edge where the document outline should be.
+	In some cases it may already help to do more preprocessing e.g. contrast enhancement.
+	Currently, our program uses the Canny Edge Detector only once with a fixed lower and upper threshold as this works best for the majority of images.
+	Whenever the document localization fails, we could try to repeat the process with lower threshold. 
+	This will introduce more noise in the edge image, but it might also be enough to detect the document outline.
+
+	Another situation in which our program works poorly is with bent document corner. 
+	This may break the localization algorithm, because the detected contour would - theoretically - have to be approximated using five instead of four corner points.
+	In some cases with minor bent corners this still works ok, as we allow for an error of 3\% when approximating the document contour(see Fig. 4a) which may still result in a four point contour approximation. 
+	The resulting image will definitely have some small distortion due to the inaccurate localization of the bent corner, but at least the algorithm does not fail entirely.
+	The same problem arises if the user is not careful while taking the image and accidentally cutting off a single corner from the picture composition.
+	
+	For the last two problematic use cases, we already have a possible solution in mind: 
+	Whenever the document localization fails, we could try a completely different approach using a Hough Transformation. 
+	Hough Transformations are very good at detecting straight lines in edge images. 
+	Detecting the four most prevalent lines (with maximum-supression) in an edge image, corresponds to detecting the most likely document edges.
+	The intersections of any two lines give us the location of each document corner. 
+	A bent/hidden corner or even a corner outside of the image composition should be less of a problem when using the Hough Transformation approach.
+	Nevertheless, it has its own downside, because the most prevalent lines have to be document edges and not for instance the edge of a desk.
+
+
 \section*{List of Acronyms} 
 \addcontentsline{toc}{section}{List of Acronyms}
 
