@@ -16,15 +16,14 @@
 	\clearpage
 
 	\section{Requirements}
-
-		There are already many document scanners on the market that can digitalize a paper or similar. 
-		The quality of the document scanning depends on the used algorithms.
-		To garantues a good scan, a perspective transformation should be used.
-		
-	    A comfortable library to use computer vision functions is \ac{OpenCV}.
-	    \ac{OpenCV} is an open source computer vision and machine learning software library. \cite{OpenCV}
-	    You can use OpenCV with the programming languages C, C++, Python or Java.
-	    
+	There are already many document scanners on the market that can digitalize a paper or similar. 
+	The quality of the document scanning depends on the used algorithms.
+	To garantues a good scan, a perspective transformation should be used.
+	
+	A comfortable library to use computer vision functions is \ac{OpenCV}.
+	\ac{OpenCV} is an open source computer vision and machine learning software library. \cite{OpenCV}
+	You can use OpenCV with the programming languages C, C++, Python or Java.
+	
 
     \section{Algorithm Overview}
 	Our algorithm for scanning a document in an image consists of three main parts, each with its own challenges.
@@ -69,10 +68,14 @@
 	
 	\section{Perspective Transformation}
 	For the document localization part, we have been working with a low resolution image, making the text unreadable.
-	Now we want to work with the full resolution image, so we need to project the detected corner points back onto the original image.
+	Now we want to create a top-down view of the document with readable text, so we need to project the detected corner points back onto the original resolution. 
 
-	sort points --> pseudo code
-	top-down view
+	When detecting contours, OpenCV does not care about the order of the points which may result in a rotated image when applying the perspective transformation.
+	So we first have to write a function that sorts our corner points in a consistent manner.
+	The following pseudo code can be used to sort points in the following order: top left, bottom left, top right, bottom right.
+
+	ToDo: pseudo code
+
 	
 	\section{Thresholding}
 	For the last step of our project we convert the scanned document into a binary image, thus each pixel is supposed to be either black for text and graphs or white for the background.
