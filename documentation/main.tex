@@ -88,17 +88,26 @@
 	In such a scenario, it would be impossible to find a static threshold that works well for the entire document.
 	So instead we need an adaptive approach that looks at a set of neighboring pixels and chooses a threshold for this local region dynamically.
 
+	The corresponding OpenCV function takes multiple parameters and after some experimenting we settled on a 11 x 11 neighbourhood and a constant C of 5. 
+	Furthermore, we prefered the adaptive Gaussian method over the adaptive mean method, making the text look smoother.
+	We determined these parameters empirically, depending on which values resulted in the most readable documents.
+
+	It should be noted that an input image with a lot of pixel noise will result in a noisy scanned document. 
+	The following image was taken with a camera using an ISO setting of 3200.
+	In order to reduce the black artifacts we could smooth the image before the thresholding. 
+	Unfortunately it would also compromise the text readability and is therefore inadvisable. 
+
 	\section{Known Problems and Possible Solutions}
-	Our algorithm works quite well and consistently even under difficult lighting conditions or when the picture of the document was taken from an unusual angle.
+	overall, our algorithm works fairly well and consistently even under difficult lighting conditions or when the picture of the document was taken from an unusual angle.
 	However, we also observed some use cases where it fails:
 	
 	If the document is placed on a low-contrast background (e.g. a white desk), our algorithm has problems detecting an edge where the document outline should be.
 	In some cases it may already help to do more preprocessing e.g. contrast enhancement.
-	Currently, our program uses the Canny Edge Detector only once with a fixed lower and upper threshold as this works best for the majority of images.
-	Whenever the document localization fails, we could try to repeat the process with lower threshold. 
-	This will introduce more noise in the edge image, but it might also be enough to detect the document outline.
+	Currently, our program uses the Canny Edge Detector only once with a fixed lower and upper threshold, because this works fine for the majority of images.
+	Whenever the document localization fails, we could try to repeat the process with lower thresholds in order to increase our chance of success. 
+	This will introduce more edge artifacts in the edge image, but it might also be enough to detect the document outline.
 
-	Another situation in which our program works poorly is with bent document corner. 
+	Another situation in which our program works poorly is with a bent document corner. 
 	This may break the localization algorithm, because the detected contour would - theoretically - have to be approximated using five instead of four corner points.
 	In some cases with minor bent corners this still works ok, as we allow for an error of 3\% when approximating the document contour(see Fig. 4a) which may still result in a four point contour approximation. 
 	The resulting image will definitely have some small distortion due to the inaccurate localization of the bent corner, but at least the algorithm does not fail entirely.
@@ -111,6 +120,7 @@
 	The intersections of any two lines give us the location of each document corner. 
 	A bent/hidden corner or even a corner outside of the image composition should be less of a problem when using the Hough Transformation approach.
 	Nevertheless, it has its own downside, because the most prevalent lines have to be document edges and not for instance the edge of a desk.
+	Therefore, the Hough Transformation would not replace our approach using contours, but rather act as a backup plan whenever our first document localization fails.
 
 
 \section*{List of Acronyms} 
