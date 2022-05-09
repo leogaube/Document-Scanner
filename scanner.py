@@ -11,21 +11,21 @@ def find_document_corners(img):
     (h, w) = img.shape[:2]
 
     scale = 1.0
-    if h > 300 or w > 300:
+    if h > 400 or w > 400:
 
         if h > w:
-            scale *= h / 300.0
-            img = imutils.resize(img, height=300)
+            scale *= h / 400.0
+            img = imutils.resize(img, height=400)
         else:
-            scale *= w / 300.0
-            img = imutils.resize(img, width=300)
+            scale *= w / 400.0
+            img = imutils.resize(img, width=400)
 
     # blur the image to reduce noise
-    blurred_img = cv.GaussianBlur(img, ksize=(3, 3), sigmaX=0)
+    blurred_img = cv.GaussianBlur(img, ksize=(5, 5), sigmaX=0)
 
     # 2. Find all contours
     # print("Edge Detection")
-    edge_img = cv.Canny(blurred_img, 100, 200)
+    edge_img = cv.Canny(blurred_img, 1, 200)
 
     # print("Contour Detection")
     # use cv.CHAIN_APPROX_SIMPLE --> best case on
@@ -135,7 +135,7 @@ if __name__ == "__main__":
     DEBUG = True
     SAVE = True
 
-    test_folder = os.path.join(".", "imgs", "test")  # "test1", "test2", "not working"
+    test_folder = os.path.join(".", "imgs", "test")  # "test", "not working"
     for image_name in os.listdir(test_folder):
         filename = os.path.join(test_folder, image_name)
         if not os.path.isfile(filename):
