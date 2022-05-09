@@ -25,7 +25,6 @@
 	    \ac{OpenCV} is an open source computer vision and machine learning software library. \cite{OpenCV}
 	    You can use OpenCV with the programming languages C, C++, Python or Java.
 	    
-	    
 
     \section{Algorithm Overview}
 	Our algorithm for scanning a document in an image consists of three main parts, each with its own challenges.
@@ -42,45 +41,51 @@
 	\section{Document Localization}
 	Some smartphone scanner apps require the user to mark the four corner points of the document manually. 
 	However, we want to automate this process by detecting the corner points using Computer Vision.
-	Detecting the corner points accurately and consistantly is probably hardest and most crutial step of the entire algorithm. 
+	Detecting the corner points consistantly is probably the hardest and most crutial step of the entire algorithm. 
 	
-		\subsection{Preprocessing}
-		Before we do Edge Detection, it is advisable to smooth the image in order to get rid of noise. Otherwise this noise may result in detection of edges which may negatively influence the algorithms performance.
-		--> Gaussian Blur
-		\subsection{Edge Detection}
-		--> Canny Edge Detection (Sobel instead?)
+	The information content of any image is really high consisting of width x height x channels indiviual values, usually in the magnitude of millions of pixels.
+	Our first goal is to find the document outline in the input image.
+	For this step we don't need a high resolution, so we will reduce the information content by first downsizing the input image to something more manageable.
+	In the process we will also get rid of noice which could potentially reduce the algorithms performance.
+	We resize the image to 400 pixels on the larger side (width or height) and adjust the smaller side according to the original aspect ratio.
 	
-		\subsection{Contours}
-		ToDo: Explain contours
+	In addition to downsizing the image, we also use a Gaussian Blur (with a 5x5 kernel) in order to smooth the image even further.
+	Now we can use a Canny Edge Detector to find locally sudden changes in brightness or color. 
+	The resulting binary image distinguishes between edges (depicted as white) and non-edges (black) for each pixel location in the original image.
+	The Canny Edge Detector uses two thresholds: TODO explain lower/higher thresholds
+	Setting low threshold values will result in more edges.
+	
+	We are only concerned that the document outline shows up in our edge image consistently, which is how we chose 150 for the higher threshold and 100 for the lower threshold.
+	
+	From this point on, we have to assume that there exists a contour in our edge image which matches the outline of our document. 
+	It is ok, if we miss the exact location of the document corners by a couple of pixels, but detecting the wrong contour would make the resulting document unreadable.
 
-		We can assume that in our edge image there is a contour that matches the outline of our document. 
-		It is ok, if we miss the exact location of the document corners by a couple of pixels, but detecting the wrong contour will make the resulting document unreadable.
-
-		Detecting contours is easy with OpenCV using the cv2.findContours(...) method.
-		However, we have to distinguish the one corresponding to our document from all the other contours in the image.
-		Other contours may include text, graphs and pictures on the document itself or even objects e.g. a stapler on the desk. 
-		The contour we are looking for is one of the largest by area and we should be able to approximate it with only four points.
-		Both of these assumptions will help us to find the right one, as it is highly unprobable another contour meets both criteria. 
-		We will just pick the largest contour that can be approximated using four points as show by the following pseudo code:
-		
+	Detecting contours is easy with OpenCV using the cv2.findContours() method.
+	However, we have to distinguish the one corresponding to our document from all the other contours in the image.
+	Other contours may include text, graphs and pictures on the document itself or even objects e.g. a stapler on the desk. 
+	The contour we are looking for should have one of the largest perimeters and it should be able to be approximated it with only four points.
+	Both of these assumptions will help us to find the right one, as it is highly unprobable another contour meets both criteria. 
+	We will just pick the largest contour that can be approximated using four points as show by the following pseudo code:
+	
 	\section{Perspective Transformation}
+	For the document localization part, we have been working with a low resolution image, making the text unreadable.
+	Now we want to work with the full resolution image, so we need to project the detected corner points back onto the original image.
+
 	sort points --> pseudo code
 	top-down view
 	
 	\section{Thresholding}
-		\subsection{Simple Thresholding}
-		For the last step of our project we convert the scanned document into a binary image, thus each pixel is supposed to be either black for text and graphs or white for the background.
-		The easiest way to achieve this is by converting the color image into grayscale and setting a threshold value. 
-		Any pixel value below this threshold would become black, pixel values above would be set to white.
+	For the last step of our project we convert the scanned document into a binary image, thus each pixel is supposed to be either black for text and graphs or white for the background.
+	The easiest way to achieve this is by converting the color image into grayscale and setting a threshold value. 
+	Any pixel value below this threshold would become black, pixel values above would be set to white.
 
-		\subsection{Adaptive Thresholding}
-		However, there is a problem with this simple thresholding approach, as it performs poorly under bad lighting conditions as can be seen in [Fig. 3a].
-		When taking pictures of documents, a user may cast a shadow with their camera or mobile phone onto the document. 
-		This can be problematic if a region in the shadows has lower pixel values for the background than the text in a well-lit region.
-		In such a scenario, it would be impossible to find a static threshold that works well for the entire document.
-		So instead we need an adaptive approach that looks at a set of neighboring pixels and chooses a threshold for this local region dynamically.
+	However, there is a problem with this simple thresholding approach, as it performs poorly under bad lighting conditions as can be seen in [Fig. 3a].
+	When taking pictures of documents, a user may cast a shadow with their camera or mobile phone onto the document. 
+	This can be problematic if a region in the shadows has lower pixel values for the background than the text in a well-lit region.
+	In such a scenario, it would be impossible to find a static threshold that works well for the entire document.
+	So instead we need an adaptive approach that looks at a set of neighboring pixels and chooses a threshold for this local region dynamically.
 
-	\section{known problems and possible solutions}
+	\section{Known Problems and Possible Solutions}
 	Our algorithm works quite well and consistently even under difficult lighting conditions or when the picture of the document was taken from an unusual angle.
 	However, we also observed some use cases where it fails:
 	
