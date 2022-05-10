@@ -53,8 +53,12 @@
 	In addition to downsizing the image, we also use a Gaussian Blur (with a 5x5 kernel) in order to smooth the image even further.
 	Now we can use a Canny Edge Detector to find locally sudden changes in brightness or color. 
 	The resulting binary image distinguishes between edges (depicted as white) and non-edges (black) for each pixel location in the original image.
-	The Canny Edge Detector uses two thresholds: TODO explain lower/higher thresholds
-	Setting low threshold values will result in more edges.
+	
+	The Canny Edge Detector uses two thresholds for the hysteresis procedure. 
+	The first threshold parameter define the minimum und the second parameter define the maximum bound.
+	For all values above the maximum bound are sure to identified as corners. 
+	Similarly for all value below the minimum bound are sure to identified as non corners. 
+	If the value is between the lower bound and upper bound, it is rejected
 	
 	We are only concerned that the document outline shows up in our edge image consistently, which is how we chose 150 for the higher threshold and 100 for the lower threshold.
 	
@@ -74,11 +78,11 @@
 
 	When detecting contours, OpenCV does not care about the order of the points which may result in a rotated image when applying the perspective transformation.
 	So we first have to write a function that sorts our corner points in a consistent manner.
-	The following pseudo code can be used to sort points in the following order: top left, bottom left, top right, bottom right.
+	The following pseudo code algorithm \ref{alg:cap} can be used to sort points in the following order: top left, bottom left, top right, bottom right.
 
 
 \begin{algorithm}[hbt!]
-\caption{pseudo code cornner sort}\label{alg:cap}
+\caption{pseudo code corner sort}\label{alg:cap}
 \begin{algorithmic}
 \Require $corners$
 %\Ensure $y = x^n$
