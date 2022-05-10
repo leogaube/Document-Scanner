@@ -4,7 +4,8 @@
 \usepackage[pdfusetitle]{hyperref}
 \usepackage{lipsum,caption}
 \usepackage{acronym} 
-
+\usepackage{algpseudocode}
+\usepackage{algorithm}
 \title{Document Scanner}
 \author{Leopold Gaube and Florian Betz}
 \date{\today}
@@ -23,6 +24,7 @@
 	A comfortable library to use computer vision functions is \ac{OpenCV}.
 	\ac{OpenCV} is an open source computer vision and machine learning software library. \cite{OpenCV}
 	You can use OpenCV with the programming languages C, C++, Python or Java.
+	In our Project, we use Python 3.
 	
 
     \section{Algorithm Overview}
@@ -74,7 +76,31 @@
 	So we first have to write a function that sorts our corner points in a consistent manner.
 	The following pseudo code can be used to sort points in the following order: top left, bottom left, top right, bottom right.
 
-	ToDo: pseudo code
+
+\begin{algorithm}[hbt!]
+\caption{pseudo code cornner sort}\label{alg:cap}
+\begin{algorithmic}
+\Require $corners$
+%\Ensure $y = x^n$
+
+\State $x$ \gets sort(corners[:, 0, 0]) \Comment{sorted x-axis}
+\State $y$ \gets sort(corners[:, 0, 1]) \Comment{sorted y-axis}
+\State $sortedcorners \gets []$
+
+\While{$i \in x$}
+\If{$i$ is equal to x[0]} or $i$ is equal to x[1]
+    \State $sortedcorners \gets sortedcorners \cup corners[i]$
+\EndIf
+\EndWhile
+\While{$i \in x$}
+\If{$i$ is equal to x[2]} or $i$ is equal to x[1]
+    \State $sortedcorners \gets sortedcorners \cup corners[i]$
+    
+\EndIf
+\EndWhile
+\end{algorithmic}
+\end{algorithm}
+	
 
 	
 	\section{Thresholding}

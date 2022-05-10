@@ -96,7 +96,7 @@ def sort_corners(corners):
 
 
 def perspective_transform(img, doc_corners):
-    # print("Persective Transformation")
+    # print("Perspective Transformation")
 
     # Final Image dimensions (keep aspect ratio of DIN A4)!
     WIDTH = 210 * 5
