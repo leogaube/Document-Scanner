@@ -31,13 +31,13 @@
 	Then we use a perspective transform from the corner points of the document to the entire span of the image in order to obtain a top-down view without perspective distortions.
 	Finally, we use a binary filter to distinguish text from background and save the resulting image as our scanned document.
 
-	However, we also want our algorithm to work under bad lighting conditions [Fig. 1b], taken from an extreme angle [Fig. 1c], with a document on a low contrast background [Fig. 1d].
+	However, we also want our algorithm to work under bad lighting conditions, when the document is rotated at 45° or even when the image was taken from an extreme angle.
 	Of course the final image will suffer in quality compared to a document taken under near-optimal conditions, but our goal is to still obtain a readable document.
 	
 	\section{Document Localization}
 	Some smartphone scanner apps require the user to mark the four corner points of the document manually. 
-	However, we want to automate this process by detecting the corner points using Computer Vision.
-	Detecting the corner points consistantly is probably the hardest and most crutial step of the entire algorithm. 
+	However, we want to automate this process by detecting these points using Computer Vision.
+	Detecting the corner points consistantly is arguably the hardest and most crutial step of the entire scanner program. 
 	
 	The information content of any image is really high consisting of width x height x channels indiviual values, usually in the magnitude of millions of pixels.
 	Our first goal is to find the document outline in the input image.
@@ -113,16 +113,36 @@
 	In such a scenario, it would be impossible to find a static threshold that works well for the entire document.
 	So instead we need an adaptive approach that looks at a set of neighboring pixels and chooses a threshold for this local region dynamically.
 
+	\begin{figure}[h!]
+		\centering
+		\begin{subfigure}[b]{0.3\linewidth}
+			\includegraphics[width=\linewidth]{imgs/threshold/bad_lighting_simple.jpg}
+		\end{subfigure}
+		\hspace{0.2\textwidth}
+		\begin{subfigure}[b]{0.3\linewidth}
+			\includegraphics[width=\linewidth]{imgs/threshold/bad_lighting_adaptive.jpg}
+		\end{subfigure}
+		\caption{A cast shadow may result in unreadable text when using a fixed threshold value (left). Therefore we use an adaptive thresholding method instead (right).}
+		\label{fig:thresholding}
+	\end{figure}
+
+
 	The corresponding OpenCV function takes multiple parameters and after some experimenting we settled on a 11 x 11 neighbourhood and a constant C of 5. 
 	Furthermore, we prefered the adaptive Gaussian method over the adaptive mean method, making the text look smoother.
 	We determined these parameters empirically, depending on which values resulted in the most readable documents.
 
-	It should be noted that an input image with a lot of pixel noise will result in a noisy scanned document. 
-	The following image was taken with a camera using an ISO setting of 3200.
+	It should be noted that an input image with a lot of pixel noise will result in a noisy scanned document.
 	In order to reduce the black artifacts we could smooth the image before the thresholding. 
 	Unfortunately it would also compromise the text readability and is therefore inadvisable. 
 
-	\section{Known Problems and Possible Solutions}
+	\begin{figure}[h!]
+		\centering
+		\includegraphics[width=0.3\linewidth]{imgs/threshold/noise.jpg}
+		\caption{A high noise images produce small black artefacts in the final scanned document. This is just a minor inconviniance, because the text is still readable. This image was taken with a camera using an ISO setting of 3200.}
+		\label{fig:noise}
+	\end{figure}
+
+	\section{Known problems and possible solutions}
 	Overall, our algorithm works fairly well and consistently even under difficult lighting conditions or when the picture of the document was taken from an unusual angle.
 	However, we also observed some use cases where it fails:
 
@@ -133,10 +153,12 @@
 			\includegraphics[width=\linewidth]{imgs/not_working/white_background.jpg}
 			\caption{A white background results in low contrast around the document outline}
 		\end{subfigure}
+		\hspace{0.02\textwidth}
 		\begin{subfigure}[b]{0.3\linewidth}
 			\includegraphics[width=\linewidth]{imgs/not_working/bent_corner.jpg}
 			\caption{A document with a bent corner is hard to approximate with a four point contour}
 		\end{subfigure}
+		\hspace{0.02\textwidth}
 		\begin{subfigure}[b]{0.3\linewidth}
 			\includegraphics[width=\linewidth]{imgs/not_working/missing_corner.jpg}
 			\caption{One of the document corners is cut off from the image composition}
@@ -172,6 +194,7 @@
 		\begin{subfigure}[b]{0.3\linewidth}
 			\includegraphics[width=\linewidth]{imgs/not_working/bent_corner_hough.jpg}
 		\end{subfigure}
+		\hspace{0.1\linewidth}
 		\begin{subfigure}[b]{0.4\linewidth}
 			\includegraphics[width=\linewidth]{imgs/not_working/missing_corner_hough.jpg}
 		\end{subfigure}
