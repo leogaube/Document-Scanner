@@ -3,9 +3,11 @@
 \usepackage{rwukoma}
 \usepackage[pdfusetitle]{hyperref}
 \usepackage{lipsum,caption}
-\usepackage{acronym} 
-\usepackage{algpseudocode}
-\usepackage{algorithm}
+\usepackage{acronym}
+\usepackage{algorithm, algpseudocode}
+\usepackage{graphicx}
+\usepackage{subcaption}
+
 \title{Document Scanner}
 \author{Leopold Gaube and Florian Betz}
 \date{\today}
@@ -60,10 +62,12 @@
 	Similarly for all value below the minimum bound are sure to identified as non corners. 
 	If the value is between the lower bound and upper bound, it is rejected
 	
-	We are only concerned that the document outline shows up in our edge image consistently, which is how we chose 150 for the higher threshold and 100 for the lower threshold.
+	We are only concerned that the document outline shows up in our edge image, which is how we chose an upper threshold of 150 that works consistently even for documents on medium-contrast backgrounds. 
+	However, we encountered a problem that on some images the document outline was missing a single pixel in the edge image and therefore resulting in an unclosed contour.
+	That is why we chose a low value of 50 for the lower threshold that helps to increase the chances of obtaining a closed contour.
 	
-	From this point on, we have to assume that there exists a contour in our edge image which matches the outline of our document. 
-	It is ok, if we miss the exact location of the document corners by a couple of pixels, but detecting the wrong contour would make the resulting document unreadable.
+	From this point on, we have to assume that there exists a closed contour in our edge image which matches the outline of our document. 
+	When trying to find the location of the document corners, it is ok if we miss them by a couple of pixels, but detecting the wrong contour would make the resulting document unreadable.
 
 	Detecting contours is easy with OpenCV using the cv2.findContours() method.
 	However, we have to distinguish the one corresponding to our document from all the other contours in the image.
@@ -87,8 +91,8 @@
 \Require $corners$
 %\Ensure $y = x^n$
 
-\State $x$ \gets sort(corners[:, 0, 0]) \Comment{sorted x-axis}
-\State $y$ \gets sort(corners[:, 0, 1]) \Comment{sorted y-axis}
+%\State $x$ \gets sort(corners[:, 0, 0]) \Comment{sorted x-axis}
+%\State $y$ \gets sort(corners[:, 0, 1]) \Comment{sorted y-axis}
 \State $sortedcorners \gets []$
 
 \While{$i \in x$}
@@ -104,8 +108,6 @@
 \EndWhile
 \end{algorithmic}
 \end{algorithm}
-	
-
 	
 	\section{Thresholding}
 	For the last step of our project we convert the scanned document into a binary image, thus each pixel is supposed to be either black for text and graphs or white for the background.
@@ -128,14 +130,34 @@
 	Unfortunately it would also compromise the text readability and is therefore inadvisable. 
 
 	\section{Known Problems and Possible Solutions}
-	overall, our algorithm works fairly well and consistently even under difficult lighting conditions or when the picture of the document was taken from an unusual angle.
+	Overall, our algorithm works fairly well and consistently even under difficult lighting conditions or when the picture of the document was taken from an unusual angle.
 	However, we also observed some use cases where it fails:
+
+
+	\begin{figure}[h!]
+		\centering
+		\begin{subfigure}[b]{0.3\linewidth}
+		  \includegraphics[width=\linewidth]{imgs/not_working/white_background.jpg}
+		  \caption{A white background results in low contrast around the document outline}
+		\end{subfigure}
+		\begin{subfigure}[b]{0.3\linewidth}
+			\includegraphics[width=\linewidth]{imgs/not_working/bent_corner.jpg}
+			\caption{A document with a bent corner is hard to approximate with a four point contour}
+		  \end{subfigure}
+		\begin{subfigure}[b]{0.3\linewidth}
+		  \includegraphics[width=\linewidth]{imgs/not_working/missing_corner.jpg}
+		  \caption{One of the document corners is cut off from the image composition}
+		\end{subfigure}
+		\caption{These are example images on which our algorithm (currently) does not work on.}
+		\label{fig:known_problems}
+	  \end{figure}
 	
 	If the document is placed on a low-contrast background (e.g. a white desk), our algorithm has problems detecting an edge where the document outline should be.
 	In some cases it may already help to do more preprocessing e.g. contrast enhancement.
 	Currently, our program uses the Canny Edge Detector only once with a fixed lower and upper threshold, because this works fine for the majority of images.
 	Whenever the document localization fails, we could try to repeat the process with lower thresholds in order to increase our chance of success. 
 	This will introduce more edge artifacts in the edge image, but it might also be enough to detect the document outline.
+
 
 	Another situation in which our program works poorly is with a bent document corner. 
 	This may break the localization algorithm, because the detected contour would - theoretically - have to be approximated using five instead of four corner points.
@@ -151,6 +173,18 @@
 	A bent/hidden corner or even a corner outside of the image composition should be less of a problem when using the Hough Transformation approach.
 	Nevertheless, it has its own downside, because the most prevalent lines have to be document edges and not for instance the edge of a desk.
 	Therefore, the Hough Transformation would not replace our approach using contours, but rather act as a backup plan whenever our first document localization fails.
+	
+	\begin{figure}[h!]
+		\centering
+		\begin{subfigure}[b]{0.3\linewidth}
+			\includegraphics[width=\linewidth]{imgs/not_working/bent_corner_hough.jpg}
+		  \end{subfigure}
+		\begin{subfigure}[b]{0.4\linewidth}
+		  \includegraphics[width=\linewidth]{imgs/not_working/missing_corner_hough.jpg}
+		\end{subfigure}
+		\caption{A Hough Transformation for detecting the four most prevalent lines (in blue). Using the intersections of these lines could potentially fix problems with missing corners. Both figures were created manually and are for illustrative purposes only.}
+		\label{fig:missing_corner_hough}
+	  \end{figure}
 
 
 \section*{List of Acronyms} 
