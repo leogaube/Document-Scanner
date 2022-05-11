@@ -16,28 +16,21 @@
 	\maketitle
 	\tableofcontents
 
-	\clearpage
-
-	\section{Requirements}
-	There are already many document scanners on the market that can digitalize a paper or similar. 
-	The quality of the document scanning depends on the used algorithms.
-	To garantues a good scan, a perspective transformation should be used.
-	
-	A comfortable library to use computer vision functions is \ac{OpenCV}.
-	\ac{OpenCV} is an open source computer vision and machine learning software library. \cite{OpenCV}
-	You can use OpenCV with the programming languages C, C++, Python or Java.
-	In our Project, we use Python 3.
-	
+	\clearpage	
 
     \section{Algorithm Overview}
-	Our algorithm for scanning a document in an image consists of three main parts, each with its own challenges.
+	Not everybody has a physical document scanner in their own household. 
+	However, there are plenty of smartphone apps available that can transform any photograph of a document into an "scanned version" without any distracting background or perspective distortions.
+	In the following report we will present our own approach for scanning a document in an image.
+	We do not want to implement everything from scratch, so we will be using \ac{OpenCV}, an open source computer vision library that fits our purpose.
+	It is available for C, C++, Python and Java. \cite{OpenCV}
+	We will be using Python 3.8 and our entire code and test images can be found on \hyperlink{Gitlab}{https://gitlab.com/gaubeleo/document-scanner}.
 	
+	The algorithm consists of three main parts, each with its own challenges.
 	First, we have to localize the document in the image. 
 	Then we use a perspective transform from the corner points of the document to the entire span of the image in order to obtain a top-down view without perspective distortions.
 	Finally, we use a binary filter to distinguish text from background and save the resulting image as our scanned document.
 
-	\section{Challenges}
-	It is fairly straight forward if we work with an image like in Figure 1a.
 	However, we also want our algorithm to work under bad lighting conditions [Fig. 1b], taken from an extreme angle [Fig. 1c], with a document on a low contrast background [Fig. 1d].
 	Of course the final image will suffer in quality compared to a document taken under near-optimal conditions, but our goal is to still obtain a readable document.
 	
@@ -137,16 +130,16 @@
 	\begin{figure}[h!]
 		\centering
 		\begin{subfigure}[b]{0.3\linewidth}
-		  \includegraphics[width=\linewidth]{imgs/not_working/white_background.jpg}
-		  \caption{A white background results in low contrast around the document outline}
+			\includegraphics[width=\linewidth]{imgs/not_working/white_background.jpg}
+			\caption{A white background results in low contrast around the document outline}
 		\end{subfigure}
 		\begin{subfigure}[b]{0.3\linewidth}
 			\includegraphics[width=\linewidth]{imgs/not_working/bent_corner.jpg}
 			\caption{A document with a bent corner is hard to approximate with a four point contour}
-		  \end{subfigure}
+		\end{subfigure}
 		\begin{subfigure}[b]{0.3\linewidth}
-		  \includegraphics[width=\linewidth]{imgs/not_working/missing_corner.jpg}
-		  \caption{One of the document corners is cut off from the image composition}
+			\includegraphics[width=\linewidth]{imgs/not_working/missing_corner.jpg}
+			\caption{One of the document corners is cut off from the image composition}
 		\end{subfigure}
 		\caption{These are example images on which our algorithm (currently) does not work on.}
 		\label{fig:known_problems}
@@ -178,13 +171,13 @@
 		\centering
 		\begin{subfigure}[b]{0.3\linewidth}
 			\includegraphics[width=\linewidth]{imgs/not_working/bent_corner_hough.jpg}
-		  \end{subfigure}
+		\end{subfigure}
 		\begin{subfigure}[b]{0.4\linewidth}
-		  \includegraphics[width=\linewidth]{imgs/not_working/missing_corner_hough.jpg}
+			\includegraphics[width=\linewidth]{imgs/not_working/missing_corner_hough.jpg}
 		\end{subfigure}
 		\caption{A Hough Transformation for detecting the four most prevalent lines (in blue). Using the intersections of these lines could potentially fix problems with missing corners. Both figures were created manually and are for illustrative purposes only.}
 		\label{fig:missing_corner_hough}
-	  \end{figure}
+	\end{figure}
 
 
 \section*{List of Acronyms} 
