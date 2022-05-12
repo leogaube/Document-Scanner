@@ -25,7 +25,7 @@ def find_document_corners(img):
 
     # 2. Find all contours
     # print("Edge Detection")
-    edge_img = cv.Canny(blurred_img, 100, 150)
+    edge_img = cv.Canny(blurred_img, 50, 150)
 
     # print("Contour Detection")
     # use cv.CHAIN_APPROX_SIMPLE --> best case on
