@@ -128,12 +128,12 @@ This matrix can in turn be used to apply this transformation to our input image 
 \lstset{label={lst:perspective_transformation}}
 \lstset{basicstyle=\footnotesize}
 \begin{lstlisting}
-# sort corners on their relative position [top left, bottom left, top right, bottom right]
+# sort using relative position [top left, bottom left, top right, bottom right]
 sorted_corners = sort_corners(document_corners)
-src = np.array(sorted_corners, dtype="float32")
-dst = np.array([[0, 0], [0, HEIGHT], [WIDTH, 0], [WIDTH, HEIGHT]], dtype="float32")
 
-M = cv.getPerspectiveTransform(src, dst)
+dst = np.array([[0, 0], [0, HEIGHT], [WIDTH, 0], [WIDTH, HEIGHT]])
+
+M = cv.getPerspectiveTransform(sorted_corners, dst)
 top_down_img = cv.warpPerspective(img, M, (WIDTH, HEIGHT))
 	\end{lstlisting}
 
