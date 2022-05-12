@@ -26,7 +26,7 @@ However, there are plenty of smartphone apps available that can transform any ph
 In the following report we will present our own approach for scanning a document in an image.
 We do not want to implement everything from scratch, so we will be using \acs{OpenCV}, an open-source computer vision library that fits our purpose.
 It is available for C, C++, Python and Java \cite{OpenCV}.
-We will be using Python 3.8. Our code and all test images are available in this Gitlab repository. \cite{Gitlab}
+We will be using Python 3.8. Our code and all test images are available in this \href{https://gitlab.com/gaubeleo/document-scanner}{GitLab repository} \cite{Gitlab}.
 
 The algorithm consists of three main parts, each with its own challenges.
 First, we have to localize the document in the image.
@@ -34,7 +34,7 @@ Then we use a perspective transform from the corner points of the document to th
 Finally, we use a binary filter to distinguish text from background and save the resulting image as our scanned document.
 
 We also want our algorithm to work under bad lighting conditions, when the document is rotated at 45° and even when the image was taken from an extreme angle.
-Of course the final image will suffer in quality compared to a document taken under near optimal conditions, but our goal is to still obtain a readable document.
+Naturally, the final image will suffer in quality compared to a document taken under near optimal conditions, but our goal is to still obtain a readable document.
 
 \section{Document Localization}
 Some smartphone scanner apps require the user to mark the four corner points of the document manually, however, we want to automate this process by detecting these points using Computer Vision.
@@ -43,7 +43,7 @@ Detecting the corner points consistently is arguably the hardest and most crucia
 Our first goal is to find the document outline in the input image, but before that we will do some preprocessing.
 We do not need a high resolution image, so we will reduce the information content by first downsizing the input image to something more manageable.
 We resize the image to 400 pixels on the larger side (width or height) and adjust the smaller side according to the original aspect ratio.
-In the process we will also get rid of noise which could potentially reduce the algorithms performance.
+In the process we will also get rid of noise which could potentially reduce the algorithm's performance.
 In addition to downsizing the image, we also use a Gaussian Blur (with a 5x5 kernel) in order to smooth the image even further.
 
 Now we can use a Canny Edge Detector to find locally sudden changes in brightness or color.
@@ -57,7 +57,7 @@ However, we encountered a problem that on some images the document outline was m
 That is why we chose a low value of 50 for the lower threshold that helps to increase the chances of obtaining a closed contour.\\
 The Canny Edge Detector finds edges in all direction (Figure \ref{fig:contours} left image). The edge image can in turn be used to detect coherent contours (Figure \ref{fig:contours} right image, red lines). The four green dots depict the detected corner points of the document.
 
-\begin{figure}[h!]
+\begin{figure}[ht!]
 	\centering
 	\begin{subfigure}[b]{0.3\linewidth}
 		\includegraphics[width=\linewidth]{imgs/edges/extreme_angle.jpg}
@@ -71,7 +71,7 @@ The Canny Edge Detector finds edges in all direction (Figure \ref{fig:contours} 
 \end{figure}
 
 From this point on, we have to assume that there exists a closed contour in our edge image which matches the outline of our document.
-When trying to find the location of the document corners, it is ok if we miss them by a couple of pixels, but detecting the wrong contour would make the resulting document unreadable.
+When trying to find the location of the document corners, it is ok if we miss them by a couple of pixels but detecting the wrong contour would make the resulting document unreadable.
 
 We use OpenCV's built-in method for finding coherent contours.
 However, we must distinguish the one corresponding to our document from all the other contours in the image.
@@ -113,7 +113,7 @@ For the document localization part, we have been working with a low resolution i
 Now we want to create a top-down view of the document with readable text, so we need to project the detected corner points back onto the original resolution.
 
 When detecting contours, OpenCV does not care about the order of the points which may result in a rotated image when applying the perspective transformation.
-Therefore, we must first sorts our corner points in a consistent manner.
+Therefore, we must first sort our corner points in a consistent manner.
 
 OpenCV provides a function for automatically calculating a perspective transformation matrix.
 It maps our detected (sorted) corner points to the corresponding image corners.
@@ -143,9 +143,9 @@ However, there is a problem with this simple thresholding approach, as it perfor
 When taking pictures of documents, a user may cast a shadow with their camera or mobile phone onto the document.
 This can be problematic if a region in the shadows has lower pixel values for the background than the text in a well-lit region.
 In such a scenario, it would be impossible to find a static threshold that works well for the entire document.
-So instead we need an adaptive approach that looks at a set of neighboring pixels and chooses a threshold for this local region dynamically which we can see in Figure \ref{fig:thresholding}b. \\
+So instead, we need an adaptive approach that looks at a set of neighboring pixels and chooses a threshold for this local region dynamically which we can see in Figure \ref{fig:thresholding}b. \\
 
-\begin{figure}[h!]
+\begin{figure}[ht!]
 	\centering
 	\begin{subfigure}[b]{0.3\linewidth}
 		\includegraphics[width=\linewidth]{imgs/threshold/bad_lighting_simple.jpg}
@@ -160,14 +160,14 @@ So instead we need an adaptive approach that looks at a set of neighboring pixel
 
 
 The corresponding OpenCV function takes multiple parameters and after some experimenting we settled on a 11 x 11 neighbourhood and a constant C of 5.
-Furthermore, we prefered the adaptive Gaussian method over the adaptive mean method, making the text look smoother.
-We determined these parameters empirically, depending on which values resulted in the most readable documents.
+Furthermore, we preferred the adaptive Gaussian method over the adaptive mean method, making the text look smoother.
+We determined these parameters empirically by trying to maximaize document readability in most test imaages.
 
-It should be noted that an input image with a lot of pixel noise will result in a noisy scanned document see in Figure \ref{fig:noise}
+It should be noted that an input image with a lot of pixel noise will result in a noisy scanned document as can be seen in Fig. \ref{fig:noise}.
 In order to reduce the black artifacts we could smooth the image before the thresholding.
 Unfortunately it would also compromise the text readability and is therefore inadvisable. \\
 
-\begin{figure}[h!]
+\begin{figure}[ht!]
 	\centering
 	\includegraphics[width=0.3\linewidth]{imgs/threshold/noise.jpg}
 	\caption{A high noise images produce small black artefacts in the final scanned document. This is a minor inconviniance, because the text is still readable. This image was taken with a \acs{DSLR} camera using an ISO setting of 3200.}
@@ -179,7 +179,7 @@ Unfortunately it would also compromise the text readability and is therefore ina
 Overall, our algorithm works consistently even under difficult lighting conditions or when the picture of the document was taken from an unusual angle.
 However, we also observed some use cases where it fails:\\
 
-\begin{figure}[h!]
+\begin{figure}[ht!]
 	\centering
 	\begin{subfigure}[b]{0.3\linewidth}
 		\includegraphics[width=\linewidth]{imgs/not_working/white_background.jpg}
@@ -207,7 +207,7 @@ This will introduce more edge artifacts in the edge image, but it might also be 
 
 Another situation in which our program works poorly is with a bent document corner.
 This may break the localization algorithm, because the detected contour would - theoretically - have to be approximated using five instead of four corner points.
-In some cases with minor bent corners this still works ok, as we allow for an error of 3\% when approximating the document contour (see in Figure  \ref{fig:missing_corner_hough}) which may still result in a four point contour approximation.
+In some cases with minor bent corners this still works ok, as we allow for an error of 3\% when approximating the document contour which may still result in a four point contour approximation.
 The resulting image will definitely have some small distortion due to the inaccurate localization of the bent corner, but at least the algorithm does not fail entirely.
 The same problem arises if the user is not careful while taking the image and accidentally cutting off a single corner from the picture composition.
 
@@ -220,7 +220,7 @@ A bent/hidden corner or even a corner outside of the image composition should be
 Nevertheless, it has its own downside, because the most prevalent lines have to be document edges and not for instance the edge of a desk.
 Therefore, the Hough Transformation would not replace our approach using contours, but rather act as a backup plan whenever our first document localization fails.\\
 
-\begin{figure}[h!]
+\begin{figure}[ht!]
 	\centering
 	\begin{subfigure}[b]{0.3\linewidth}
 		\includegraphics[width=\linewidth]{imgs/not_working/bent_corner_hough.jpg}
