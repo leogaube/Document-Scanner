@@ -9,6 +9,8 @@
 \usepackage{subcaption}
 \usepackage{listings}
 
+\setlength{\belowcaptionskip}{10pt}
+
 \title{Document Scanner}
 \author{Leopold Gaube and Florian Betz}
 \date{\today}
@@ -47,7 +49,7 @@ In the process we will also get rid of noise which could potentially reduce the 
 In addition to downsizing the image, we also use a Gaussian Blur (with a 5x5 kernel) in order to smooth the image even further.
 
 Now we can use a Canny Edge Detector to find locally sudden changes in brightness or color.
-The resulting binary image distinguishes between edges (depicted as white) and non-edges (black) for each pixel location in the original image.
+The resulting binary image distinguishes between edges (depicted as white) and non-edges (black) for each pixel location in the original image (see Fig. \ref{subfig:edges}).
 The Canny Edge Detector uses two thresholds.
 All potential edges above the maxValue-parameter will always become an edge and all potential edges below the lowValue will all be rejected.
 Any value in between both thresholds will only be accepted as an edge if the pixel is adjacent to an already existing edge. \cite{Canny}
@@ -55,29 +57,31 @@ Any value in between both thresholds will only be accepted as an edge if the pix
 We are only concerned that the document outline shows up in our edge image, so we chose an upper threshold of 150 which works consistently even for documents on medium contrast backgrounds.
 However, we encountered a problem that on some images the document outline was missing a single pixel in the edge image and therefore resulting in an unclosed contour.
 That is why we chose a low value of 50 for the lower threshold that helps to increase the chances of obtaining a closed contour.\\
-The Canny Edge Detector finds edges in all direction (Figure \ref{fig:contours} left image). The edge image can in turn be used to detect coherent contours (Figure \ref{fig:contours} right image, red lines). The four green dots depict the detected corner points of the document.
 
 \begin{figure}[ht!]
 	\centering
-	\begin{subfigure}[b]{0.3\linewidth}
-		\includegraphics[width=\linewidth]{imgs/edges/extreme_angle.jpg}
+	\begin{subfigure}[t]{0.3\linewidth}
+		\includegraphics[width=\linewidth]{imgs/test/cluttered_desk.jpg}
+		\caption{Input image}
+		\label{subfig:input}
 	\end{subfigure}
-	\hspace{0.2\textwidth}
-	\begin{subfigure}[b]{0.3\linewidth}
-		\includegraphics[width=\linewidth]{imgs/contours/extreme_angle.jpg}
+	\hspace{0.1\textwidth}
+	\begin{subfigure}[t]{0.3\linewidth}
+		\includegraphics[width=\linewidth]{imgs/edges/cluttered_desk.jpg}
+		\caption{Canny Edge Detection}
+		\label{subfig:edges}
 	\end{subfigure}
-	\caption{Canny Edge Detector with contours}
-	\label{fig:contours}
+	\caption{The Canny Edge Detector finds local regions of sudden brightness change.}
 \end{figure}
 
 From this point on, we have to assume that there exists a closed contour in our edge image which matches the outline of our document.
 When trying to find the location of the document corners, it is ok if we miss them by a couple of pixels but detecting the wrong contour would make the resulting document unreadable.
 
 We use OpenCV's built-in method for finding coherent contours.
-However, we must distinguish the one corresponding to our document from all the other contours in the image.
+The challenge is to distinguish the one corresponding to our document from all the other contours.
 Other contours may include text, graphs and pictures on the document itself or even objects e.g. a stapler on the desk.
 The contour we are looking for should have one of the largest perimeters and it should be able to be approximated it with only four points.
-Both of these assumptions will help us to find the right one, as it is highly improbable that a different contour meets both criteria.
+Both of these assumptions will help us to find the right one, as it is highly improbable that a different contour meets both criteria. 
 We will pick the largest contour that can be approximated using four points as shown by the following code: \\
 
 \lstset{language=Python}
@@ -117,7 +121,7 @@ Therefore, we must first sort our corner points in a consistent manner.
 
 OpenCV provides a function for automatically calculating a perspective transformation matrix.
 It maps our detected (sorted) corner points to the corresponding image corners.
-This matrix can in turn be used to apply this transformation to our input image in order to obtain a top-down view of our document.\\
+This matrix can in turn be used to apply this transformation to our input image in order to obtain a top-down view of our document (see Fig. \ref{subfig:perspective_tranform}).\\
 
 \lstset{language=Python}
 \lstset{frame=lines}
@@ -134,40 +138,64 @@ M = cv.getPerspectiveTransform(src, dst)
 top_down_img = cv.warpPerspective(img, M, (WIDTH, HEIGHT))
 	\end{lstlisting}
 
+\begin{figure}[ht!]
+	\centering
+	\begin{subfigure}[t]{0.315\linewidth}
+		\includegraphics[width=\linewidth]{imgs/contours/extreme_angle.jpg}
+		\caption{Detected contours (red) and document corner points (green) overlayed onto the original image}
+		\label{subfig:contours}
+	\end{subfigure}
+	\hspace{0.1\textwidth}
+	\begin{subfigure}[t]{0.3\linewidth}
+		\includegraphics[width=\linewidth]{imgs/topdown/extreme_angle.jpg}
+		\caption{Document in top-down view}
+		\label{subfig:perspective_tranform}
+	\end{subfigure}
+	\caption{By using a perspective tranformation we obtain a readable document without any background.}
+\end{figure}
+
 \section{Thresholding}
 For the last step of our project we convert the scanned document into a binary image, thus each pixel is supposed to be either black for text and graphs or white for the background.
 The easiest way to achieve this is by converting the color image into grayscale and setting a threshold value.
 Any pixel value below this threshold would become black, pixel values above would be set to white.
 
-However, there is a problem with this simple thresholding approach, as it performs poorly under bad lighting conditions as can be seen in Figure \ref{fig:thresholding}a.
+However, there is a problem with this simple thresholding approach, as it performs poorly under bad lighting conditions as can be seen in Figure \ref{subfig:simple_thresholding}.
 When taking pictures of documents, a user may cast a shadow with their camera or mobile phone onto the document.
 This can be problematic if a region in the shadows has lower pixel values for the background than the text in a well-lit region.
 In such a scenario, it would be impossible to find a static threshold that works well for the entire document.
-So instead, we need an adaptive approach that looks at a set of neighboring pixels and chooses a threshold for this local region dynamically which we can see in Figure \ref{fig:thresholding}b. \\
+So instead, we need an adaptive approach that looks at a set of neighboring pixels and chooses a threshold for this local region dynamically (see Fig. \ref{subfig:adaptive_thresholding}). \\
 
 \begin{figure}[ht!]
 	\centering
-	\begin{subfigure}[b]{0.3\linewidth}
+	\begin{subfigure}[t]{0.3\linewidth}
+		\includegraphics[width=\linewidth]{imgs/test/bad_lighting.jpg}
+		\caption{input image}
+		\label{subfig:shadow_input}
+	\end{subfigure}
+	\begin{subfigure}[t]{0.28\linewidth}
 		\includegraphics[width=\linewidth]{imgs/threshold/bad_lighting_simple.jpg}
+		\caption{simple threshold}
+		\label{subfig:simple_thresholding}
 	\end{subfigure}
-	\hspace{0.2\textwidth}
-	\begin{subfigure}[b]{0.3\linewidth}
+	\begin{subfigure}[t]{0.28\linewidth}
 		\includegraphics[width=\linewidth]{imgs/threshold/bad_lighting_adaptive.jpg}
+		\caption{adaptive threshold}
+		\label{subfig:adaptive_thresholding}
 	\end{subfigure}
-	\caption{A cast shadow may result in unreadable text when using a fixed threshold value (left). Therefore we use an adaptive thresholding method instead (right).}
+	\caption{A cast shadow in the input image \ref{sub@subfig:shadow_input} may result in unreadable text when using a fixed threshold value (\ref{sub@subfig:simple_thresholding}) and therefore an adaptive thresholding method  (\ref{sub@subfig:adaptive_thresholding}) should be used instead.}
 	\label{fig:thresholding}
 \end{figure}
 
 
 The corresponding OpenCV function takes multiple parameters and after some experimenting we settled on a 11 x 11 neighbourhood and a constant C of 5.
 Furthermore, we preferred the adaptive Gaussian method over the adaptive mean method, making the text look smoother.
-We determined these parameters empirically by trying to maximaize document readability in most test imaages.
+We determined these parameters empirically by trying to maximaize document readability in most test images.
 
-It should be noted that an input image with a lot of pixel noise will result in a noisy scanned document as can be seen in Fig. \ref{fig:noise}.
+It should be noted that an input image with a lot of pixel noise will result in a noisy scanned document as can be seen in Figure \ref{fig:noise}.
 In order to reduce the black artifacts we could smooth the image before the thresholding.
 Unfortunately it would also compromise the text readability and is therefore inadvisable. \\
 
-\begin{figure}[ht!]
+\begin{figure}[h!]
 	\centering
 	\includegraphics[width=0.3\linewidth]{imgs/threshold/noise.jpg}
 	\caption{A high noise images produce small black artefacts in the final scanned document. This is a minor inconviniance, because the text is still readable. This image was taken with a \acs{DSLR} camera using an ISO setting of 3200.}
@@ -179,19 +207,19 @@ Unfortunately it would also compromise the text readability and is therefore ina
 Overall, our algorithm works consistently even under difficult lighting conditions or when the picture of the document was taken from an unusual angle.
 However, we also observed some use cases where it fails:\\
 
-\begin{figure}[ht!]
+\begin{figure}[h!]
 	\centering
-	\begin{subfigure}[b]{0.3\linewidth}
+	\begin{subfigure}[t]{0.3\linewidth}
 		\includegraphics[width=\linewidth]{imgs/not_working/white_background.jpg}
 		\caption{A white background results in low contrast around the document outline}
 	\end{subfigure}
 	\hspace{0.02\textwidth}
-	\begin{subfigure}[b]{0.3\linewidth}
+	\begin{subfigure}[t]{0.3\linewidth}
 		\includegraphics[width=\linewidth]{imgs/not_working/bent_corner.jpg}
 		\caption{A document with a bent corner is hard to approximate with a four point contour}
 	\end{subfigure}
 	\hspace{0.02\textwidth}
-	\begin{subfigure}[b]{0.3\linewidth}
+	\begin{subfigure}[t]{0.3\linewidth}
 		\includegraphics[width=\linewidth]{imgs/not_working/missing_corner.jpg}
 		\caption{One of the document corners is cut off from the image composition}
 	\end{subfigure}
@@ -222,11 +250,11 @@ Therefore, the Hough Transformation would not replace our approach using contour
 
 \begin{figure}[ht!]
 	\centering
-	\begin{subfigure}[b]{0.3\linewidth}
+	\begin{subfigure}[t]{0.3\linewidth}
 		\includegraphics[width=\linewidth]{imgs/not_working/bent_corner_hough.jpg}
 	\end{subfigure}
 	\hspace{0.1\linewidth}
-	\begin{subfigure}[b]{0.4\linewidth}
+	\begin{subfigure}[t]{0.4\linewidth}
 		\includegraphics[width=\linewidth]{imgs/not_working/missing_corner_hough.jpg}
 	\end{subfigure}
 	\caption{A Hough Transformation for detecting the four most prevalent lines (in blue). Using the intersections of these lines could potentially fix problems with missing corners. Both figures were created manually and are for illustrative purposes only.}
