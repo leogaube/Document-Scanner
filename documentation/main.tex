@@ -164,9 +164,13 @@ However, there is a problem with this simple thresholding approach, as it perfor
 When taking pictures of documents, a user may cast a shadow with their camera or mobile phone onto the document.
 This can be problematic if a region in the shadows has lower pixel values for the background than the text in a well-lit region.
 In such a scenario, it would be impossible to find a static threshold that works well for the entire document.
-So instead, we need an adaptive approach that looks at a set of neighboring pixels and chooses a threshold for this local region dynamically (see Fig. \ref{subfig:adaptive_thresholding}). \\
+So instead, we need an adaptive approach that looks at a set of neighboring pixels and chooses a threshold for this local region dynamically (see Fig. \ref{subfig:adaptive_thresholding}).
 
-\begin{figure}[hb!]
+The corresponding OpenCV function takes multiple parameters and after some experimenting we settled on a 11 x 11 neighbourhood and a constant C of 5.
+Furthermore, we preferred the adaptive Gaussian method over the adaptive mean method, making the text look smoother.
+We determined these parameters empirically by trying to maximaize document readability in most test images.
+
+\begin{figure}[H]
 	\centering
 	\begin{subfigure}[t]{0.3\linewidth}
 		\includegraphics[width=\linewidth]{imgs/test/bad_lighting.jpg}
@@ -187,18 +191,13 @@ So instead, we need an adaptive approach that looks at a set of neighboring pixe
 	\label{fig:thresholding}
 \end{figure}
 
-
-The corresponding OpenCV function takes multiple parameters and after some experimenting we settled on a 11 x 11 neighbourhood and a constant C of 5.
-Furthermore, we preferred the adaptive Gaussian method over the adaptive mean method, making the text look smoother.
-We determined these parameters empirically by trying to maximaize document readability in most test images.
-
-It should be noted that an input image with a lot of pixel noise will result in a noisy scanned document as can be seen in Figure \ref{fig:noise}.
+It should be noted that an input image with a lot of pixel noise will result in a noisy scanned document no matter the thresholding method (see Fig. \ref{fig:noise}).
 In order to reduce the black artifacts we could smooth the image before the thresholding.
-Unfortunately it would also compromise the text readability and is therefore inadvisable.
+Unfortunately it would also compromise the text readability and is therefore inadvisable.\\
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=0.25\linewidth]{imgs/threshold/noise.jpg}
+	\includegraphics[width=0.3\linewidth]{imgs/threshold/noise.jpg}
 	\caption{A high noise images produce small black artefacts in the final scanned document. This is a minor inconviniance, because the text is still readable. This image was taken with a \acs{DSLR} camera using an ISO setting of 3200.}
 	\label{fig:noise}
 \end{figure}
@@ -207,37 +206,47 @@ Unfortunately it would also compromise the text readability and is therefore ina
 
 Overall, our algorithm works consistently even under difficult lighting conditions or when the picture of the document was taken from an unusual angle.
 However, we also observed some use cases where it fails.
-If the document is placed on a low-contrast background (e.g. a white desk), our algorithm has problems detecting an edge where the document outline should be.
-In some cases it may already help to do more preprocessing e.g. contrast enhancement.
-Currently, our program uses the Canny Edge Detector only once with a fixed lower and upper threshold, because this works fine for the majority of images.
+If the document is placed on a low-contrast background, for instance a white desk (see Fig. \ref{subfig:white_background}), our algorithm has problems detecting an edge where the document outline should be.
+In some cases it may help to do more preprocessing e.g. contrast enhancement.
+In its current state, our program uses the Canny Edge Detector only once with a fixed lower and upper threshold, because this works fine for the majority of images.
 Whenever the document localization fails, we could try to repeat the process with lower thresholds in order to increase our chance of success.
 This will introduce more edge artifacts in the edge image, but it might also be enough to detect the document outline.
 
-Another situation in which our program works poorly is with a bent document corner.
-This may break the localization algorithm, because the detected contour would - theoretically - have to be approximated using five instead of four corner points.
-In some cases with minor bent corners this still works ok, as we allow for an error of 3\% when approximating the document contour which may still result in a four point contour approximation.
-The resulting image will definitely have some small distortion due to the inaccurate localization of the bent corner, but at least the algorithm does not fail entirely.
-The same problem arises if the user is not careful while taking the image and accidentally cutting off a single corner from the picture composition.
+Another situation in which our program works poorly is with a bent document corner (see Fig. \ref{subfig:bent_corner}).
+This may break the localization algorithm, because the detected contour would have to be approximated using five instead of four corner points.
+The same problem arises if the user accidentally cuts off a single corner from the image composition (see Fig. \ref{subfig:missing_corner}).
 
 \begin{figure}[H]
 	\centering
 	\begin{subfigure}[t]{0.3\linewidth}
 		\includegraphics[width=\linewidth]{imgs/not_working/white_background.jpg}
 		\caption{low contrast background}
+		\label{subfig:white_background}
 	\end{subfigure}
 	\hspace{0.02\textwidth}
 	\begin{subfigure}[t]{0.3\linewidth}
 		\includegraphics[width=\linewidth]{imgs/not_working/bent_corner.jpg}
-		\caption{document with a bent corner}
+		\caption{a bent corner}
+		\label{subfig:bent_corner}
 	\end{subfigure}
 	\hspace{0.02\textwidth}
 	\begin{subfigure}[t]{0.3\linewidth}
 		\includegraphics[width=\linewidth]{imgs/not_working/missing_corner.jpg}
-		\caption{one missing document corner}
+		\caption{one missing corner}
+		\label{subfig:missing_corner}
 	\end{subfigure}
 	\caption{These are example images on which our algorithm does not work properly on.}
 	\label{fig:known_problems}
 \end{figure}
+
+For the last two problematic use cases, we have a possible solution in mind:
+Whenever the document localization fails, we could try a completely different approach using a Hough Transformation.
+Hough Transformations can be used to detect straight lines in edge images.
+Detecting the four most prevalent lines (with maximum-supression), corresponds to detecting the most likely document edges.
+The intersections of any two lines give us the location of each document corner.
+A bent corner or even a corner outside of the image composition should be less of a problem when using the Hough Transformation approach.
+Nevertheless, it has its own downside, because the most prevalent lines have to be document edges and not for instance the edge of a desk.
+Therefore, the Hough Transformation would not replace our approach using contours, but rather act as a backup solution whenever our first document localization fails.\\
 
 \begin{figure}[H]
 	\centering
@@ -251,15 +260,6 @@ The same problem arises if the user is not careful while taking the image and ac
 	\caption{A Hough Transformation for detecting the four most prevalent lines (in blue). Using the intersections of these lines could potentially fix problems with missing corners. Both figures were created manually and are for illustrative purposes only.}
 	\label{fig:missing_corner_hough}
 \end{figure}
-
-For the last two problematic use cases, we already have a possible solution in mind:
-Whenever the document localization fails, we could try a completely different approach using a Hough Transformation.
-Hough Transformations are very good at detecting straight lines in edge images.
-Detecting the four most prevalent lines (with maximum-supression) in an edge image, corresponds to detecting the most likely document edges.
-The intersections of any two lines give us the location of each document corner.
-A bent corner or even a corner outside of the image composition should be less of a problem when using the Hough Transformation approach.
-Nevertheless, it has its own downside, because the most prevalent lines have to be document edges and not for instance the edge of a desk.
-Therefore, the Hough Transformation would not replace our approach using contours, but rather act as a backup solution whenever our first document localization fails.
 
 \clearpage
 \section*{List of Acronyms}
